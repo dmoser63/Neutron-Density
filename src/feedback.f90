@@ -38,8 +38,8 @@ real(real64), intent(in) :: t                                           ! Time [
 real(real64), intent(in) :: dt                                          ! Time step [s]
 real(real64), parameter  :: fast_v             = 2.0E9                  ! Velocity of fast neutrons [cm s-1]
 real(real64), parameter  :: thermal_v          = 2.2E5                  ! Velocity of thermal neutrons [cm s-1]            
-real(real64), parameter  :: micro_cross_f      = 1.28672E-24            ! Fast microscopic cross-section @ 2 MeV [cm]
-real(real64), parameter  :: micro_cross_t      = 585E-24                ! Thermal microscopic cross-section @ 0.0253 eV [cm]
+real(real64), parameter  :: micro_cross_f      = 1.28672E-24            ! Fast microscopic cross-section @ 2 MeV [cm2]
+real(real64), parameter  :: micro_cross_t      = 585E-24                ! Thermal microscopic cross-section @ 0.0253 eV [cm2]
 real(real64), parameter  :: a_density          = (6.022E23/235.0)*19.05 ! Atomic density [atoms cm-3]
 real(real64), parameter  :: heat_per_fission   = .35E-10                ! Heat per fission [J per fission]
 real(real64), parameter  :: volume             = 100.0**3               ! Volume of one cubic meter core [cm3]
@@ -75,8 +75,7 @@ power = micro_cross*a_density*n_density*n_velocity*volume*heat_per_fission
 ht_conduction = get_forced_convection()
 
 ! Heat loss by radiation 
-if (reactor_temp >= 52000.0) stop "Overflow is imminent due to radiative heat calculation, stopping program"
-
+if (reactor_temp >= 6000.0) stop "Reactor is hotter than Sun and already vaporized, stopping program!"
 ht_radiation = emisivity*sb*(reactor_temp**4 - temp_equil**4)
 
 ! Calculate the energy to temperature conversion factor
@@ -93,7 +92,7 @@ reactor_temp = reactor_temp + delta_reactor_temp
 write(70,*) t, reactor_temp, power, ht_conduction, ht_radiation
 
 ! Output change in reactivity due to thermal feedback  
-get_feedback = delta_reactor_temp * alpha_temp * get_reactivity(t)
+get_feedback = delta_reactor_temp * alpha_temp
 
 end function get_feedback
 
@@ -111,13 +110,13 @@ end function get_feedback
 !-----------------------------------------------------------
 function get_forced_convection()
 real(real64) :: get_forced_convection
-real(real64), parameter :: pi = 4.0*atan(1.0)        ! Pi
-real(real64), parameter :: mu = 0.008536             ! Dynamic viscosity of water [g cm-1 s-1]
-real(real64), parameter :: k = 0.0061056             ! Thermal conductivity of water [W cm-1 K-1] 
-real(real64), parameter :: w_density = .9966         ! Density of water [g cm-3]
+real(real64), parameter :: pi = 4.0_real64*atan(1.0) ! Pi
+real(real64), parameter :: mu = 0.008536_real64      ! Dynamic viscosity of water [g cm-1 s-1]
+real(real64), parameter :: k = 0.0061056_real64      ! Thermal conductivity of water [W cm-1 K-1] 
+real(real64), parameter :: w_density = .9966_real64  ! Density of water [g cm-3]
 real(real64), parameter :: pr = 5.846                ! Pradntl number 
-real(real64), parameter :: velocity = 100.0          ! Velocity of water through core [cm s-1]
-real(real64), parameter :: ch_length = (pi/2.0)      ! Characteristc length for one pin [cm]
+real(real64), parameter :: velocity = 100.0_real64   ! Velocity of water through core [cm s-1]
+real(real64), parameter :: ch_length = pi/2.0        ! Characteristc length for one pin [cm]
 real(real64), parameter :: pins = 2500               ! Number of pins in 50 x 50 array
 real(real64), parameter :: area_ht = pi*(1.0)/100.0  ! Area of heat transfer of one pin [cm2]
 real(real64)            :: re_lc                     ! Reynolds number at the characteristic length
@@ -130,10 +129,10 @@ real(real64)            :: ht_coef                   ! Average heat transfer coe
 re_lc = (w_density*velocity*ch_length)/mu
 
 ! Calculate the laminar flow Nusselt number
-nu_lam = 0.664*re_lc**(1.0/2.0)*pr**(1.0/3.0)
+nu_lam = 0.664_real64*sqrt(re_lc)*pr**(1.0/3.0)
 
 ! Caluclate the turbulent flow Nusselt number
-nu_turb = (0.037*re_lc**(0.8)*pr)/(1+2.443*re_lc**(-0.1)*(pr**(2.0/3.0)-1))
+nu_turb = (0.037*re_lc**(0.8)*pr)/(1.0+2.443*re_lc**(-0.1)*(pr**(2.0/3.0)-1.0))
 
 ! Calculate the average Nusselt number ( 0.3 the nu_0 for pipes/tubes/cylinders )
 nu_avg = 0.3 + sqrt(nu_lam**2 + nu_turb**2)
