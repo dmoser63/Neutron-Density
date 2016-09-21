@@ -1,4 +1,4 @@
-# Neutron-Density
+# P.E.S.
 Point kinetics equation solver for education and research purposes. 
 
 This code implements PKE solver expanding on  Yang Xue, Jevremović Tatjana: "Revisiting the Rosenbrock numerical   solutions of the reactor point kinetics equation with numerous examples",  Nuclear Technology and Radiation Protection 24, p. 3-12, (2009)  doi:10.2298/NTRP0901003Yby adding neutron source and thermal-reactivity feedback.
